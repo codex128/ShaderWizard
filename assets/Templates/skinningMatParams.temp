@@ -1,0 +1,5 @@
+Int NumberOfBones
+Matrix4Array BoneMatrices
+FloatArray MorphWeights
+Int NumberOfMorphTargets
+Int NumberOfTargetsBuffers

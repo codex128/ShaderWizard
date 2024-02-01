@@ -1,0 +1,6 @@
+WorldViewProjectionMatrix
+CameraPosition
+WorldMatrix
+WorldNormalMatrix
+ViewProjectionMatrix
+ViewMatrix

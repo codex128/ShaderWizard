@@ -1,0 +1,7 @@
+HARDWARE_SHADOWS : HardwareShadows
+FILTER_MODE : FilterMode
+PCFEDGE : PCFEdge          
+SHADOWMAP_SIZE : ShadowMapSize
+FADE : FadeInfo
+PSSM : Splits
+POINTLIGHT : LightViewProjectionMatrix5

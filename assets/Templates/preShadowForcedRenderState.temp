@@ -1,0 +1,5 @@
+FaceCull Off
+DepthTest On
+DepthWrite On
+PolyOffset 5 3
+ColorWrite Off

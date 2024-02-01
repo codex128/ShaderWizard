@@ -1,0 +1,3 @@
+NUM_BONES : NumberOfBones
+NUM_MORPH_TARGETS : NumberOfMorphTargets
+NUM_TARGETS_BUFFERS : NumberOfTargetsBuffers

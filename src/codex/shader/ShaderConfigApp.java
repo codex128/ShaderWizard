@@ -4,7 +4,11 @@ import com.jme3.app.SimpleApplication;
 import com.jme3.input.MouseInput;
 import com.jme3.input.controls.AnalogListener;
 import com.jme3.input.controls.MouseAxisTrigger;
+import com.jme3.material.Material;
 import com.jme3.math.Vector3f;
+import com.jme3.renderer.Camera;
+import com.jme3.scene.Geometry;
+import com.jme3.scene.shape.Box;
 import com.jme3.system.AppSettings;
 import com.simsilica.lemur.Axis;
 import com.simsilica.lemur.Button;
@@ -29,7 +33,7 @@ import java.util.LinkedList;
  * Move your Logic into AppStates or Controls
  * @author normenhansen
  */
-public class ShaderConfigApp extends SimpleApplication implements AnalogListener {
+public class ShaderConfigApp extends SimpleApplication implements AnalogListener, TemplateKeyRenderer {
     
     private static final float INACTIVE = .15f;
     private static final float SCROLL_SPEED = 1500f;
@@ -38,6 +42,7 @@ public class ShaderConfigApp extends SimpleApplication implements AnalogListener
     private RadioSet template;
     private Checkbox glslCompat;
     private Checkbox vertexColors;
+    private Checkbox alphaDiscard;
     private Checkbox normals, tangents;
     private Checkbox skinning;
     private Checkbox shadows;
@@ -62,6 +67,8 @@ public class ShaderConfigApp extends SimpleApplication implements AnalogListener
         ShaderConfigApp app = new ShaderConfigApp();
         var settings = new AppSettings(true);
         settings.setTitle("JME3 Shader Wizard");
+        settings.setWidth(1024);
+        settings.setHeight(768);
         app.setSettings(settings);
         app.start();
     }
@@ -92,7 +99,7 @@ public class ShaderConfigApp extends SimpleApplication implements AnalogListener
         );
         main.attachChild(template);
         template.setCurrentBox(0);
-        for (int i = 1; i < 4; i++) {
+        for (int i = 2; i < template.getBoxes().length; i++) {
             template.getBox(i).setAlpha(INACTIVE);
         }
         
@@ -193,21 +200,7 @@ public class ShaderConfigApp extends SimpleApplication implements AnalogListener
         glslVersions.add(vInput.addChild(new Checkbox("440"), 4, 3));
         glslVersions.add(vInput.addChild(new Checkbox("450"), 5, 3));
         
-        var shadersMain = main.addChild(new Container());
-        shadersMain.addChild(new Label("Shader Config:", new ElementId("title.label")));
-        var shadersConfig = shadersMain.addChild(new Container());
-        shadersConfig.setBackground(null);
-        glslCompat = shadersConfig.addChild(new Checkbox("Import GLSLCompat"));
-        vertexColors = shadersConfig.addChild(new Checkbox("Vertex Colors"));
-        normals = shadersConfig.addChild(new Checkbox("Normals"));
-        tangents = shadersConfig.addChild(new Checkbox("Tangents"));
-        skinning = shadersConfig.addChild(new Checkbox("Skinning"));
-        instancing = shadersConfig.addChild(new Checkbox("Instancing"));
-        createGlowWindow(shadersConfig);
-        createShadowsWindow(shadersConfig);
-        var padding = shadersMain.addChild(new Container());
-        padding.setPreferredSize(new Vector3f(20, 7, 0));
-        padding.setBackground(null);
+        createShaderConfigWindow(main);
         
         setDefaultSettings();
         
@@ -223,6 +216,15 @@ public class ShaderConfigApp extends SimpleApplication implements AnalogListener
         } else if (name.equals("scroll-down")) {
             main.move(0, -tpf*SCROLL_SPEED, 0);
         }
+    }    
+    @Override
+    public String makeReplacementString(String key) {
+        return switch (key) {
+            case "name" -> matDefName.getText();
+            case "vert" -> getVertexExportTarget();
+            case "frag" -> getFragmentExportTarget();
+            default -> key;
+        };
     }
     
     private void setDefaultSettings() {
@@ -246,6 +248,28 @@ public class ShaderConfigApp extends SimpleApplication implements AnalogListener
         }
     }
     
+    private void createShaderConfigWindow(Container container) {
+        var window = container.addChild(new Container());
+        window.addChild(new Label("Shader Config:", new ElementId("title.label")));
+        var config = window.addChild(new Container());
+        config.setBackground(null);
+        var general = config.addChild(new Container());
+        general.setLayout(new SpringGridLayout(Axis.X, Axis.Y));
+        general.setBackground(null);
+        general.setInsets(new Insets3f(0, 0, 10, 250));
+        glslCompat = general.addChild(new Checkbox("Import GLSLCompat"), 0, 0);
+        vertexColors = general.addChild(new Checkbox("Vertex Colors"), 0, 1);
+        alphaDiscard = general.addChild(new Checkbox("Alpha Discard"), 0, 2);
+        normals = general.addChild(new Checkbox("Normals"), 0, 3);
+        tangents = general.addChild(new Checkbox("Tangents"), 1, 0);
+        skinning = general.addChild(new Checkbox("Skinning"), 1, 1);
+        instancing = general.addChild(new Checkbox("Instancing"), 1, 2);
+        createGlowWindow(config);
+        createShadowsWindow(config);
+        var padding = window.addChild(new Container());
+        padding.setPreferredSize(new Vector3f(20, 7, 0));
+        padding.setBackground(null);
+    }
     private void createGlowWindow(Container container) {
         glow = container.addChild(new Checkbox("Glow"));
         var glowSettings = container.addChild(new Container());
@@ -265,18 +289,18 @@ public class ShaderConfigApp extends SimpleApplication implements AnalogListener
         shadowSettings.setBackground(null);
         shadowSettings.setInsets(new Insets3f(0, 50, 0, 0));
         shadowSettings.setLayout(new SpringGridLayout(Axis.Y, Axis.X));
-        preShadowVert = createLabelledTextField(shadowSettings, "Pre-Shadow Vertex Shader:", "", 0, 0);
+        preShadowVert = createLabeledTextField(shadowSettings, "Pre-Shadow Vertex Shader:", "", 0, 0);
         preShadowVert.setText("Common/MatDefs/Shadow/PreShadow.vert");
-        preShadowFrag = createLabelledTextField(shadowSettings, "Pre-Shadow Fragment Shader:", "", 1, 0);
+        preShadowFrag = createLabeledTextField(shadowSettings, "Pre-Shadow Fragment Shader:", "", 1, 0);
         preShadowFrag.setText("Common/MatDefs/Shadow/PreShadow.frag");
-        postShadowVert = createLabelledTextField(shadowSettings, "Post-Shadow Vertex Shader:", "", 2, 0);
+        postShadowVert = createLabeledTextField(shadowSettings, "Post-Shadow Vertex Shader:", "", 2, 0);
         postShadowVert.setText("Common/MatDefs/Shadow/PostShadow.vert");
-        postShadowFrag = createLabelledTextField(shadowSettings, "Post-Shadow Fragment Shader:", "", 3, 0);
+        postShadowFrag = createLabeledTextField(shadowSettings, "Post-Shadow Fragment Shader:", "", 3, 0);
         postShadowFrag.setText("Common/MatDefs/Shadow/PostShadow.frag");
         //CheckboxLink.link(shadows, shadowSettings, true, INACTIVE);
         shadowSettings.addControl(new CheckboxFadeLink(shadows, true, INACTIVE));
     }    
-    private TextField createLabelledTextField(Container container, String name, String text, int y, int x) {
+    private TextField createLabeledTextField(Container container, String name, String text, int y, int x) {
         float paddingVertical = 3;
         var label = container.addChild(new Label(name, new ElementId("note.label")), y, x);
         label.setInsets(new Insets3f(paddingVertical, 10, paddingVertical, 5));
@@ -294,6 +318,7 @@ public class ShaderConfigApp extends SimpleApplication implements AnalogListener
             int i = template.getCurrentIndex();
             switch (i) {
                 case 0 -> exportCustom();
+                case 1 -> exportPBR();
             }
         } catch (IOException e) {
             return false;
@@ -311,7 +336,7 @@ public class ShaderConfigApp extends SimpleApplication implements AnalogListener
     }
     private void createSharedFolder() {
         if (useSharedFolder.isChecked()) {
-            var folder = new File(getExportPath(""));
+            var folder = new File(getExportPath(sharedFolderExport.getText()));
             if (!folder.exists()) {
                 folder.mkdirs();
             }
@@ -333,23 +358,23 @@ public class ShaderConfigApp extends SimpleApplication implements AnalogListener
     }
     private void exportCustomMatDef() throws IOException {
         resetIndent();
-        var file = new File(getExportPath(getMatDefExportTarget()));
-        if (file.exists()) {
-            file.delete();
-        }
-        file.createNewFile();
-        writer = new FileWriter(file);
+        String path = getExportPath(getMatDefExportTarget());
+        System.out.println("custom matdef export: "+path);
+        writer = new FileWriter(createNewFile(path));
         write("MaterialDef "+matDefName.getText()+" {");
         indent(1);
         write("MaterialParameters {");
         indent(1);
-        if (vertexColors.isChecked()) {
+        if (alphaDiscard.isChecked() || vertexColors.isChecked() || instancing.isChecked()) {
             write("");
+        }
+        if (alphaDiscard.isChecked()) {
+            write("Float AlphaDiscardThreshold");
+        }
+        if (vertexColors.isChecked()) {
             write("Boolean UseVertexColor");
         }
         if (instancing.isChecked()) {
-            write("");
-            write("// Instancing");
             write("Boolean UseInstancing");
         }
         if (skinning.isChecked()) {
@@ -376,6 +401,9 @@ public class ShaderConfigApp extends SimpleApplication implements AnalogListener
             }
             @Override
             public void writeDefines() throws IOException {
+                if (alphaDiscard.isChecked()) {
+                    write("DISCARD_ALPHA : AlphaDiscardThreshold");
+                }
                 if (vertexColors.isChecked()) {
                     write("VERTEX_COLOR : UseVertexColor");
                 }
@@ -405,6 +433,9 @@ public class ShaderConfigApp extends SimpleApplication implements AnalogListener
                 }
                 @Override
                 public void writeDefines() throws IOException {
+                    if (alphaDiscard.isChecked()) {
+                        write("DISCARD_ALPHA : AlphaDiscardThreshold");
+                    }
                     if (instancing.isChecked()) {
                         write("INSTANCING : UseInstancing");
                     }
@@ -432,6 +463,9 @@ public class ShaderConfigApp extends SimpleApplication implements AnalogListener
                 }
                 @Override
                 public void writeDefines() throws IOException {
+                    if (alphaDiscard.isChecked()) {
+                        write("DISCARD_ALPHA : AlphaDiscardThreshold");
+                    }
                     if (instancing.isChecked()) {
                         write("INSTANCING : UseInstancing");
                     }
@@ -466,6 +500,9 @@ public class ShaderConfigApp extends SimpleApplication implements AnalogListener
                 }
                 @Override
                 public void writeDefines() throws IOException {
+                    if (alphaDiscard.isChecked()) {
+                        write("DISCARD_ALPHA : AlphaDiscardThreshold");
+                    }
                     if (vertexColors.isChecked()) {
                         write("VERTEX_COLOR : UseVertexColor");
                     }
@@ -490,12 +527,7 @@ public class ShaderConfigApp extends SimpleApplication implements AnalogListener
     }
     private void exportCustomVertexShader() throws IOException {
         resetIndent();
-        var file = new File(getExportPath(getVertexExportTarget()));
-        if (file.exists()) {
-            file.delete();
-        }
-        file.createNewFile();
-        writer = new FileWriter(file);
+        writer = new FileWriter(createNewFile(getExportPath(getVertexExportTarget())));
         write("");
         if (glslCompat.isChecked()) {
             write("#import \"Common/ShaderLib/GLSLCompat.glsllib\"");
@@ -606,8 +638,7 @@ public class ShaderConfigApp extends SimpleApplication implements AnalogListener
     }
     private void exportCustomFragmentShader() throws IOException {
         resetIndent();
-        var file = new File(getExportPath(getFragmentExportTarget()));
-        writer = new FileWriter(file);
+        writer = new FileWriter(createNewFile(getExportPath(getFragmentExportTarget())));
         write("");
         if (glslCompat.isChecked()) {
             write("#import \"Common/ShaderLib/GLSLCompat.glsllib\"");
@@ -638,8 +669,24 @@ public class ShaderConfigApp extends SimpleApplication implements AnalogListener
         writer.close();
     }
     
-    private void exportPBR() {
-        
+    private void exportPBR() throws IOException {
+        writer = new FileWriter(createNewFile(getExportPath(getMatDefExportTarget())));
+        var matdef = (Template)assetManager.loadAsset("Templates/pbrLightingMatDef.temp");
+        matdef.setKeyRenderer(this);
+        matdef.write(writer, "");
+        writer.close();
+        if (createVertShader.isChecked()) {
+            writer = new FileWriter(createNewFile(getExportPath(getVertexExportTarget())));
+            var vertex = (Template)assetManager.loadAsset("Templates/pbrLightingVertex.temp");
+            vertex.write(writer, "");
+            writer.close();
+        }
+        if (createFragShader.isChecked()) {
+            writer = new FileWriter(createNewFile(getExportPath(getFragmentExportTarget())));
+            var fragment = (Template)assetManager.loadAsset("Templates/pbrLightingFragment.temp");
+            fragment.write(writer, "");
+            writer.close();
+        }
     }    
     private void exportPhong() {
         
@@ -651,9 +698,9 @@ public class ShaderConfigApp extends SimpleApplication implements AnalogListener
     private String getMatDefExportTarget() {
         String name = addExtension(matDefName.getText().trim(), ".j3md");
         if (useSharedFolder.isChecked()) {
-            return name;
+            return trimPathSlash(combinePaths(sharedFolderExport.getText(), name));
         } else {
-            return combinePaths(matDefExport.getText(), name);
+            return trimPathSlash(combinePaths(matDefExport.getText(), name));
         }
     }
     private String getVertexExportTarget() {
@@ -662,9 +709,9 @@ public class ShaderConfigApp extends SimpleApplication implements AnalogListener
         }
         String name = addExtension(vertexName.getText().trim(), ".vert");
         if (useSharedFolder.isChecked()) {
-            return name;
+            return trimPathSlash(combinePaths(sharedFolderExport.getText(), name));
         } else {
-            return combinePaths(shaderExport.getText(), name);
+            return trimPathSlash(combinePaths(shaderExport.getText(), name));
         }
     }
     private String getFragmentExportTarget() {
@@ -673,18 +720,13 @@ public class ShaderConfigApp extends SimpleApplication implements AnalogListener
         }
         String name = addExtension(fragmentName.getText().trim(), ".frag");
         if (useSharedFolder.isChecked()) {
-            return name;
+            return trimPathSlash(combinePaths(sharedFolderExport.getText(), name));
         } else {
-            return combinePaths(shaderExport.getText(), name);
+            return trimPathSlash(combinePaths(shaderExport.getText(), name));
         }
     }
     private String getExportPath(String ext) {
-        if (useSharedFolder.isChecked()) {
-            return combinePaths(combinePaths(assetDirectory.getText().trim(),
-                    sharedFolderExport.getText().trim()), ext);
-        } else {
-            return combinePaths(assetDirectory.getText().trim(), ext);
-        }
+        return combinePaths(assetDirectory.getText().trim(), ext);
     }
     private String combinePaths(String path1, String path2) {
         boolean a = path1.endsWith("/");
@@ -696,6 +738,13 @@ public class ShaderConfigApp extends SimpleApplication implements AnalogListener
             return path;
         } else {
             return path+extension;
+        }
+    }
+    private String trimPathSlash(String path) {
+        if (path.startsWith("/")) {
+            return path.substring(1);
+        } else {
+            return path;
         }
     }
     private String getSupportedGlslVersions() {
@@ -729,6 +778,15 @@ public class ShaderConfigApp extends SimpleApplication implements AnalogListener
     private void writeTemplate(String asset) throws IOException {
         var t = (Template)assetManager.loadAsset(asset);
         t.write(writer, indent);
+    }
+    
+    private File createNewFile(String path) throws IOException {
+        var file = new File(path);
+        if (file.exists()) {
+            file.delete();
+        }
+        file.createNewFile();
+        return file;
     }
     
 }

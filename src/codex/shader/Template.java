@@ -19,6 +19,7 @@ import java.util.LinkedList;
 public class Template implements AssetLoader {
     
     private final LinkedList<String> text = new LinkedList<>();
+    private TemplateKeyRenderer renderer;
     
     public Template() {}
     
@@ -26,7 +27,7 @@ public class Template implements AssetLoader {
     public Template load(AssetInfo assetInfo) throws IOException {
         var template = new Template();
         var br = new BufferedReader(new InputStreamReader(assetInfo.openStream()));
-        String line = null;
+        String line;
         while ((line = br.readLine()) != null) {
             template.text.add(line);
         }
@@ -35,8 +36,38 @@ public class Template implements AssetLoader {
     
     public void write(FileWriter writer, String indent) throws IOException {
         for (String t : text) {
+            if (renderer != null) {
+                t = render(t);
+            }
             writer.write(indent+t+"\n");
         }
+    }
+    private String render(String line) {
+        boolean build = false;
+        StringBuilder render = new StringBuilder();
+        StringBuilder chunk = new StringBuilder();
+        for (int i = 0; i < line.length(); i++) {
+            char c = line.charAt(i);
+            if (c == '[') {
+                build = true;
+            } else if (build) {
+                if (c == ']') {
+                    build = false;
+                    String replacement = renderer.makeReplacementString(chunk.toString());
+                    render.append(replacement);
+                    chunk.delete(0, chunk.length());
+                } else {
+                    chunk.append(c);
+                }
+            } else {
+                render.append(c);
+            }
+        }
+        return render.toString();
+    }
+    
+    public void setKeyRenderer(TemplateKeyRenderer replacer) {
+        this.renderer = replacer;
     }
     
 }

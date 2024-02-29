@@ -48,10 +48,10 @@ public class Template implements AssetLoader {
         StringBuilder chunk = new StringBuilder();
         for (int i = 0; i < line.length(); i++) {
             char c = line.charAt(i);
-            if (c == '[') {
+            if (c == '<') {
                 build = true;
             } else if (build) {
-                if (c == ']') {
+                if (c == '>') {
                     build = false;
                     String replacement = renderer.makeReplacementString(chunk.toString());
                     render.append(replacement);

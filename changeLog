@@ -1,0 +1,20 @@
+
+RELEASE v0.0
+
+* add: PBRLighting template
+* add: Alpha Discard for custom template
+* fix: MatDef having wrong shader paths when shared export folder is enabled
+
+RELEASE v0.1
+
+* change: export button size
+* add: export notification
+* fixed: removed specular AA reference from PBR fragment template
+* fixed: typo in normals calculation in the custom template vertex shader
+* add: support for modern glsl syntax
+* fixed: matrix uniforms in custom vertex shader if instancing is not enabled
+* fixed: filter template not importing glslcompat
+
+RELEASE v0.2
+
+* fix: missing end-quote on glslcompat import in filter template

@@ -4,32 +4,32 @@
  */
 package codex.shader;
 
+import codex.boost.Listenable;
 import com.jme3.scene.Node;
 import com.simsilica.lemur.Checkbox;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.LinkedList;
 
 /**
  *
  * @author codex
  */
-public class RadioSet extends Node {
+public class RadioSet extends Node implements Listenable<RadioEventListener> {
     
     private final Checkbox[] boxes;
-    private Checkbox current;
+    private int current;
+    private final LinkedList<RadioEventListener> listeners = new LinkedList<>();
 
     public RadioSet(Checkbox... boxes) {
         assert boxes.length > 0;
         this.boxes = boxes;
-        for (int i = 0; i < this.boxes.length; i++) {
+        current = 0;
+        this.boxes[current].setChecked(true);
+        for (int i = 1; i < this.boxes.length; i++) {
             if (this.boxes[i].isChecked()) {
-                if (current != null) {
-                    this.boxes[i].setChecked(false);
-                } else {
-                    current = this.boxes[i];
-                }
+                this.boxes[i].setChecked(false);
             }
-        }
-        if (current == null) {
-            current = this.boxes[0];
         }
     }
     
@@ -37,48 +37,48 @@ public class RadioSet extends Node {
     public void updateLogicalState(float tpf) {
         super.updateLogicalState(tpf);
         boolean checked = false;
-        for (Checkbox r : boxes) {
-            if (r != current && r.isChecked() && !checked) {
-                setCurrentBox(r);
+        for (int i = 0; i < boxes.length; i++) {
+            if (i == current) continue;
+            var r = boxes[i];
+            if (r.isChecked() && !checked) {
+                setCurrentBox(i);
                 checked = true;
             } else {
                 r.setChecked(false);
             }
         }
-        if (!current.isChecked()) {
-            current.setChecked(true);
+        if (!getCurrentBox().isChecked()) {
+            getCurrentBox().setChecked(true);
+        }
+    }
+    @Override
+    public Collection<RadioEventListener> getListeners() {
+        return listeners;
+    }
+    
+    public void setCurrentBox(int i) {
+        if (i != current) {
+            notifyListeners(l -> l.stateChanged(this, current, i));
+            boxes[current].setChecked(false);
+            current = i;
+            boxes[current].setChecked(true);
         }
     }
     
-    private void setCurrentBox(Checkbox box) {
-        current.setChecked(false);
-        current = box;
-        current.setChecked(true);
-    }
-    public void setCurrentBox(int i) {
-        setCurrentBox(boxes[i]);
-    }
-    
     public Checkbox getCurrentBox() {
-        return current;
+        return boxes[current];
     }
     public Checkbox[] getBoxes() {
         return boxes;
     }
     public Checkbox getBox(int i) {
         return boxes[i];
-    }
-    
+    }    
     public int getCurrentIndex() {
-        for (int i = 0; i < boxes.length; i++) {
-            if (boxes[i] == current) {
-                return i;
-            }
-        }
-        return -1;
+        return current;
     }
     public boolean isCurrentBox(int i) {
-        return boxes[i] == current;
+        return i == current;
     }
     
 }

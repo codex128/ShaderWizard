@@ -1,4 +1,4 @@
-MaterialDef [name] {
+MaterialDef <name> {
 
     MaterialParameters {
         Int BoundDrawBuffer
@@ -137,8 +137,8 @@ MaterialDef [name] {
     Technique {
         LightMode SinglePassAndImageBased
         
-        VertexShader GLSL300 GLSL150 GLSL110:   [vert]
-        FragmentShader GLSL300 GLSL150 GLSL110: [frag]
+        VertexShader   <versions> : <vert>
+        FragmentShader <versions> : <frag>
 
         WorldParameters {
             WorldViewProjectionMatrix
@@ -184,12 +184,11 @@ MaterialDef [name] {
             HORIZON_FADE: HorizonFade
         }
     }
-
-
+    
     Technique PreShadow {
 
-        VertexShader   GLSL300 GLSL150 GLSL100:   Common/MatDefs/Shadow/PreShadow.vert
-        FragmentShader GLSL300 GLSL150 GLSL100: Common/MatDefs/Shadow/PreShadowPBR.frag
+        VertexShader   <versions> : Common/MatDefs/Shadow/PreShadow.vert
+        FragmentShader <versions> : Common/MatDefs/Shadow/PreShadowPBR.frag
 
         WorldParameters {
             WorldViewProjectionMatrix
@@ -219,8 +218,8 @@ MaterialDef [name] {
 
 
     Technique PostShadow {
-        VertexShader   GLSL310 GLSL300 GLSL150 GLSL100:   Common/MatDefs/Shadow/PostShadow.vert
-        FragmentShader GLSL310 GLSL300 GLSL150 GLSL100: Common/MatDefs/Shadow/PostShadowPBR.frag
+        VertexShader   <versions> :   Common/MatDefs/Shadow/PostShadow.vert
+        FragmentShader <versions> : Common/MatDefs/Shadow/PostShadowPBR.frag
 
         WorldParameters {
             WorldViewProjectionMatrix
@@ -255,8 +254,8 @@ MaterialDef [name] {
 
     Technique PreNormalPass {
 
-        VertexShader   GLSL300 GLSL150 GLSL100 :   Common/MatDefs/SSAO/normal.vert
-        FragmentShader GLSL300 GLSL150 GLSL100 : Common/MatDefs/SSAO/normal.frag
+        VertexShader   <versions> : Common/MatDefs/SSAO/normal.vert
+        FragmentShader <versions> : Common/MatDefs/SSAO/normal.frag
 
         WorldParameters {
             WorldViewProjectionMatrix
@@ -279,8 +278,8 @@ MaterialDef [name] {
 
     Technique Glow {
 
-        VertexShader   GLSL300 GLSL150 GLSL100: Common/MatDefs/Misc/Unshaded.vert
-        FragmentShader GLSL300 GLSL150 GLSL100: Common/MatDefs/Light/PBRGlow.frag
+        VertexShader   <versions> : Common/MatDefs/Misc/Unshaded.vert
+        FragmentShader <versions> : Common/MatDefs/Light/PBRGlow.frag
 
         WorldParameters {
             WorldViewProjectionMatrix
